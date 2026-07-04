@@ -1,0 +1,437 @@
+\documentclass[hidelinks, 12pt]{article}
+
+% Margen de 1 pulgada por lado
+\usepackage{fullpage}
+% Incluye gráficas
+\usepackage{graphicx}
+% Packages para matemáticas, por la American Mathematical Society
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+% Desactivar hyphenation
+\usepackage[none]{hyphenat}
+% Saltar entre párrafos - sin sangrías
+\usepackage[skip=10pt]{parskip}
+% Español y UTF-8
+\usepackage[spanish, es-lcroman]{babel}
+\usepackage[utf8]{inputenc}
+% Remover acentos a funciones y operadores matemáticos
+\unaccentedoperators
+% Links en el documento
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\setlength{\headheight}{15.2pt}
+\setlength{\headsep}{5pt}
+% Código en el documento
+\usepackage{listings}
+% Enumeración alternativa de listas
+\usepackage{enumitem}
+\renewcommand{\labelitemi}{$\bullet$}
+% Posicionamiento alternativo de figuras
+\usepackage{float}
+% Símbolos especiales
+\usepackage{stmaryrd}
+% Bibliografía
+\usepackage{biblatex}
+\addbibresource{aux.bib}
+% Formato de url
+\usepackage{xurl}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Zs}{\mathbb{Z}^*}
+\DeclareMathOperator{\mcd}{mcd}
+\newcommand{\Exp}[1]{\mathcal{E}_{#1}}
+\newcommand{\List}[1]{\mathcal{L}_{#1}}
+\newcommand{\EN}{\Exp{\N}}
+\newcommand{\LN}{\List{\N}}
+
+\newcommand{\comment}[1]{}
+\newcommand{\lb}{\\~\\}
+\newcommand{\eop}{_{\square}}
+\newcommand{\hsig}{\hat{\sigma}}
+\newcommand{\ra}{\rightarrow}
+\newcommand{\la}{\leftarrow}
+\newcommand{\lora}{\longrightarrow}
+\newcommand{\lola}{\longleftarrow}
+\newcommand{\lra}{\leftrightarrow}
+\newcommand{\llra}{\longleftrightarrow}
+
+
+\newtheorem{theorem}{Teorema}
+\newtheorem{lemma}{Lema}[section]
+\newtheorem*{corollary}{Corolario}
+\newtheorem*{definition}{Definición}
+\newtheorem*{proposition}{Proposición}
+
+\newcommand{\autor}{Ismael Felipe Browne Salinas}
+
+
+\begin{document}
+\raggedright
+
+\begin{minipage}{0.5in}
+\includegraphics[width=0.5in]{img/logo.pdf}
+\end{minipage}
+\begin{minipage}{3in}
+\textsc{\raggedright \footnotesize
+Pontificia Universidad Católica de Chile \\
+Departamento de Ciencia de la Computación \\
+IMT2985 - Investigación de pregrado}
+\end{minipage}
+
+\begin{center}  
+\vspace{1cm}
+{\LARGE\bf Prueba de primalidad Miller-Rabin}\\
+\vspace{0.2cm}
+\today\\
+\vspace{0.2cm}
+\footnotesize{\autor}\\
+\vspace{0.2cm}
+\footnotesize{Prof. M. Arenas}
+\end{center}
+
+
+\section{Introducción}
+
+\newpage
+\section{El teorema principal}
+
+A lo largo de este informe $\mcd(a,b)$ denota el máximo común divisor entre los números enteros $a$ y $b$, y $a \bmod b$ denota el mínimo residuo no negativo de $a$ dividido por $b$. El hecho de que $b$ divide a $a$ se denota con $b\mid a$. El tamaño de un conjunto $C$ se denota con $|C|$. También, se utiliza $e(a)$ para denotar el $i$ más grande tal que $2^i\mid a$.
+
+Para una secuencia $m=(m_1,\dots,m_k)$ de enteros se define $a\bmod m=(s_1,\dots,s_k)$, donde $a \bmod m_i=s_i,~1 \leq i \leq k$. También, una expresión como por ejemplo $(m,a)$ denota la secuencia $(m_1,\dots,m_k,a)$.
+
+Denótese, para $n\geq 1$ entero, $\Z_n=\{0,\dots,n-1\}$, es decir, $\Z_n$ es el conjunto de todos los posibles restos no negativos obtenidos al dividir un entero por $n$. Desde aquí, se define $\Zs_n=\{a\in \Z_n\mid\mcd(a,n)=1\}$. Se tiene que para este conjunto, $|\Zs_n|=\phi(n)$, donde $\phi$ es la función de Euler. Además, $(\Zs_n,\cdot\bmod n)$ es un grupo. Si $n=p^k$, donde $p$ es primo, entonces se puede demostrar que $\phi(n)=p^k-p^{k-1}$. 
+
+\begin{definition}
+    Sea $n$ entero. Para un entero $b$, se dice que $b$ es testigo de la composición de $n$, denotado por la condición $W_n(b)$, si:
+    \begin{enumerate}[label=\textup{(}\roman*\textup{)}]
+        \item $1\leq b<n$
+        \item \begin{enumerate}[label=\textup{(}\alph*\textup{)}] 
+            \item $b^{n-1}\not\equiv_n 1$\textup{, o bien,}
+            \item $\exists i:(2^i\mid(n-1)\wedge 1<\mcd(b^{\frac{n-1}{2^i}}-1,n)<n)$
+        \end{enumerate}
+    \end{enumerate}
+\end{definition}
+
+Si $W_n(b)$ es verdadero para algún $b$, entonces $n$ es compuesto. Esto se debe a que si $(ii)(a)$ se cumple, entonces el Pequeño Teorema de Fermat no se satisface para $n$, lo que inmediatamente implica que $n$ es compuesto. Mientras tanto, si $(ii)(b)$ se cumple, esto indica que $n$ tiene un divisor propio (i.e., un divisor distinto a $n$) mayor a 1. Es por esto que se justifica que si $W_n(b)$ se satisface, entonces $b$ es un testigo de la composición de $n$.
+
+Ahora bien, si $n$ es primo, el Pequeño Teorema de Fermat está garantizado, además de que el número no tiene divisores propios distintos a 1, por lo que $W_n(b)$ será falso para todos los $b$ enteros. A continuación se presenta el único teorema del artículo, fundamental para la prueba de primalidad propuesta por Rabin.
+
+\begin{theorem}
+\label{th:1}
+    Si $n>4$ es un número compuesto, entonces 
+    \begin{equation}
+        |\{b\mid W_n(b)\}|\geq \frac{3}{4}(n-1)
+        \label{eq:th1}
+    \end{equation}
+\end{theorem}
+
+Obsérvese que desde (\ref{eq:th1}) se tiene que:
+\begin{align*}
+    &|\{b\mid W_n(b)\}|\geq\frac{3}{4}(n-1) \quad\llra\\
+    &|\{b\mid 1\leq b<n\wedge W_n(b)\}|\geq \frac{3}{4}(n-1) \quad\llra\\
+    n-1-&|\{b\mid 1\leq b<n\wedge\neg W_n(b)\}|\geq\frac{3}{4}(n-1) \quad\llra\\
+    -&|\{b\mid 1\leq b<n\wedge\neg W_n(b)\}|\geq-\frac{1}{4}(n-1) \quad\llra\\
+    &|\{b\mid 1\leq b<n\wedge\neg W_n(b)\}|\leq\frac{1}{4}(n-1) \\
+\end{align*}
+
+Y por lo tanto, a lo más $\frac{1}{4}$ de los $b$ dentro del rango $1\leq b<n$ no van a ser testigos de la composición de $n$. Se requieren un par de lemas para la demostración del teorema \ref{th:1}, y previo a eso, se presentan a continuación unas herramientas que serán esenciales para realizar este procedimiento.
+
+\newpage
+\section{Herramientas matemáticas importantes}
+\begin{enumerate}
+    \item Propiedad simple de módulos. \\
+    \begin{proposition}
+        Sean $n,p$ enteros tales que $p\mid n$. Luego, para un $x$ entero, se tiene que: \[(x\bmod n)\bmod p=x\bmod p\]
+    \end{proposition}
+    \begin{proof}
+        Defínase $q=\frac{n}{p}$ y $r=x\bmod n$. Luego, existe un $y$ entero tal que $x=yn+r=ypq+r$. Obsérvese entonces que:
+        \[x\bmod p=(ypq+r)\bmod p=r\bmod p=(x\bmod n)\bmod p\]
+    \end{proof}
+    
+    \item Teorema Chino del Resto. \\
+    \begin{theorem}[Teorema Chino del Resto]
+        Sean los enteros $m,n$ tales que $\mcd(m,n)=1$. Entonces, para todo par de enteros $a,b$ existe un $c$ entero tal que: 
+        \[c\equiv_m a,\quad c\equiv_n b\]
+    \end{theorem}
+    \begin{proof}
+        Dado que $\mcd(m,n)=1$, $m$ tiene inverso módulo $n$, y análogamente, $n$ tiene inverso módulo $m$. Por lo tanto, existen enteros $d$ y $e$ tales que:
+        \[md\equiv_n 1,\quad ne\equiv_m 1\]
+        Entonces, definiendo $c=ane+bmd$, se tiene que:
+        \begin{align*}
+            &c\equiv_m ane\equiv_m a\\
+            &c\equiv_n bmd\equiv_n b
+        \end{align*}
+    \end{proof}
+    
+    Adicionalmente, se puede generalizar el Teorema Chino del Resto para un sistema con una cantidad arbitraria de congruencias.
+    \begin{corollary}[Teorema Chino del Resto generalizado]
+        Sea la secuencia de enteros $m=(m_1,\dots,m_k)$ tales que $\mcd(m_i,m_j)=1,~1\leq i<j\leq k$. Entonces, para toda secuencia $(s_1,\dots,s_k)$ de enteros existe un $b$ entero tal que:
+        \[b\equiv_{m_1}s_1,\quad\dots,\quad b\equiv_{m_k}s_k\]
+    \end{corollary}
+    \begin{proof}
+        Se realizará una demostración por inducción simple sobre la cantidad $k$ de congruencias.
+        \begin{itemize}
+            \item[]\textbf{Caso base} \\
+            Con $k=2$, se tiene $m=(m_1,m_2),~s=(s_1,s_2)$, y por Teorema Chino del Resto, existe un $b$ entero tal que $b\equiv_{m_1}s_1,~b\equiv_{m_2}s_2$.
+            \item[]\textbf{Caso inductivo} \\
+            Suponga que se cumple la proposición para $k$ congruencias. Entonces, para un sistema de $k+1$ se tiene $m=(m_1,\dots,m_{k+1}),~s=(s_1,\dots,s_{k+1})$. Luego, por hipótesis inductiva, existe un $c$ entero tal que:
+            \[c\equiv_{m_1}s_1,\quad\dots,\quad c\equiv_{m_k}s_k\]
+            Definiendo $M_k=\prod^k_{i=1}m_i$, se observa que $\mcd(M_k,m_{k+1})=1$, por lo que, por Teorema Chino del Resto, para el par $s_{k+1},c$ existe un $b$ entero tal que:
+            \[b\equiv_{m_{k+1}}s_{k+1},\quad b\equiv_{M_k}c\]
+            Después, obsérvese que para $1\leq i\leq k$:
+            \begin{align*}
+                &b\bmod m_i=(b\bmod M_x)\bmod m_i=(c\bmod M_x)\bmod m_i=c\bmod m_i=s_i \\
+                \lora\quad &b\equiv_{m_i}s_i
+            \end{align*}
+            Por lo tanto, se concluye que:
+            \[b\equiv_{m_1}s_1,\quad\dots,\quad b\equiv_{m_k}s_k,\quad b\equiv_{m_{k+1}}s_{k+1}\]
+        \end{itemize}
+    \end{proof}
+
+    \item Propiedad multiplicativa de la función $\phi$ de Euler. \\
+    \begin{proposition}[Multiplicatividad de la función $\phi$]
+        Sea un par de enteros $m,n\geq 1$ tales que $\mcd(m,n)=1$. Entonces, $\phi(mn)=\phi(m)\cdot\phi(n)$.
+    \end{proposition}
+    \begin{proof}
+        Observando que $\phi(mn)=|\Zs_{mn}|,~\phi(m)=|\Zs_m|,~\phi(n)=|\Zs_n|$, se tiene el siguiente lema.
+        \begin{lemma}
+        \label{le:3.1}
+            Sean los grupos $(\Zs_{mn},\cdot\bmod mn),~(\Zs_{m},\cdot\bmod m),~(\Zs_{n},\cdot\bmod n)$, donde $\mcd(m,n)=1$. Entonces, los grupos $\Zs_{mn}$ y $\Zs_m\times\Zs_n$ son isomorfos, es decir, 
+            \[\Zs_{mn}\cong\Zs_m\times\Zs_n\]
+        \end{lemma}
+        \begin{proof}
+            \renewcommand\qedsymbol{$\blacksquare$}
+            Se desea encontrar una función $f:\Zs_{mn}\ra\Zs_m\times\Zs_n$ biyectiva tal que, si $f(a_1)=(b_1,c_1)$ y $f(a_2)=(b_2,c_2)$, entonces:
+            \begin{equation}
+                f((a_1a_2)\bmod mn)=f(a_1)\cdot f(a_2)=((b_1b_2)\bmod m,(c_1c_2)\bmod n)
+                \label{eq:cond_iso}
+            \end{equation}
+            Una función que cumpla estos requerimientos, y en especial la condición de isomorfismo de la ecuación (\ref{eq:cond_iso}), se denomina un isomorfismo entre $\Zs_{mn}$ y $\Zs_m\times\Zs_n$.
+            Entonces, sea $a\in\Zs_{mn}$, que cumple con que $\mcd(mn,a)=1$, por lo que, por Identidad de Bézout, existen $s,t$ enteros tales que $1=smn+ta$. Calculando el resto módulo $m$ de ambos lados se obtiene que $1\equiv_mta$, y entonces el número $a$ tiene inverso módulo $m$. Luego, $1=\mcd(m,a)=\mcd(m,a\bmod m)$, y por lo tanto $a\bmod m\in\Zs_m$. De manera análoga, se tiene que $a\bmod n\in\Zs_n$, y con estos resultados, se determina que $(a\bmod m,a\bmod n)\in\Zs_m\times\Zs_n$.
+
+            Desde este análisis, se propone la función $f:\Zs_{mn}\ra\Zs_m\times\Zs_n$ dada por: \[f(a)=(a\bmod m,a\bmod n)\]
+            Ahora bien, para demostrar que $f$ es inyectiva, sean $a_1,a_2\in\Zs_{mn}$ tales que $f(a_1)=f(a_2)$, lo que implica $(a_1\bmod m,a_1\bmod n)=(a_2\bmod m,a_2\bmod n)$. Entonces:
+            \begin{align*}
+                &a_1\bmod m=a_2\bmod m\ra a_1\equiv_m a_2\ra m\mid(a_1-a_2) \\
+                &a_1\bmod n=a_2\bmod n\ra a_1\equiv_n a_2\ra n\mid(a_1-a_2)
+            \end{align*}
+            Como $m$ y $n$ no comparten factores primos, entonces $mn\mid(a_1-a_2)$, por lo que $a_1\bmod mn=a_2\bmod mn$, y como $1\leq a_1,a_2\leq mn-1$, entonces $a_1=a_2$.
+
+            Para demostrar que $f$ es sobreyectiva, sea $(b,c)\in\Zs_m\times\Zs_n$. Entonces, dado que $\mcd(m,n)=1$, por Teorema Chino del Resto existe un $\alpha$ entero tal que $\alpha\equiv_m b,~\alpha\equiv_n c$. Luego, definiendo $a=\alpha\bmod mn$, se tiene en primer lugar que $1\leq a\leq mn-1$. Después, como $1=\mcd(b,m)=\mcd(b\bmod m,m)=\mcd(\alpha,m)$, y también $1=\mcd(c,n)=\mcd(\alpha,n)$, entonces
+            \[1=\mcd(\alpha,mn)=\mcd(\alpha\bmod mn,mn)=\mcd(a,mn)\]
+            Por lo que $a\in\Zs_{mn}$. Por último, se verifica que:
+            \begin{align*}
+                f(a)&=(a\bmod m,a\bmod n)=((\alpha\bmod mn)\bmod m,(\alpha\bmod mn)\bmod n) \\
+                &=(\alpha\bmod m,\alpha\bmod n)=(b\bmod m,c\bmod n)=(b,c)
+            \end{align*}
+
+            Habiendo comprobado que $f$ es biyectiva, se procede a demostrar que la función cumple con (\ref{eq:cond_iso}). Sean $f(a_1)=(b_1,c_1),~f(a_2)=(b_2,c_2)$. Entonces:
+            \begin{align*}
+                f((a_1a_2)\bmod mn)&=(((a_1a_2)\bmod mn)\bmod m,((a_1a_2)\bmod mn)\bmod n) \\
+                &=((a_1a_2)\bmod m,(a_1a_2)\bmod n) \\
+                &=((a_1\bmod m\cdot a_2\bmod m)\bmod m,(a_1\bmod n\cdot a_2\bmod n)\bmod n) \\
+                &=((b_1b_2)\bmod m,(c_1c_2)\bmod n)
+            \end{align*}
+            
+            De esta manera, se demuestra que $f$ es un isomorfismo entre $\Zs_{mn}$ y $\Zs_m\times\Zs_n$, lo que permite concluir que los grupos $\Zs_{mn}$ y $\Zs_m\times\Zs_n$ son isomorfos.
+
+        \end{proof}
+        
+        A partir del lema \ref{le:3.1}, se comprueba que existe una función biyectiva entre $\Zs_{mn}$ y $\Zs_m\times\Zs_n$ (considerando que lo demostrado en el lema es mucho más fuerte que esto), por lo que estos conjuntos son equinumerosos. Finalmente:
+        \[\phi(mn)=|\Zs_{mn}|=|\Zs_m\times\Zs_n|=|\Zs_m|\cdot |\Zs_n|=\phi(m)\cdot \phi(n)\]
+    \end{proof}
+
+    \item Propiedad de los homomorfismos de grupo. \\
+    \begin{lemma}
+    \label{le:3.2}
+        Sean los grupos $(G,\circ),~(H,\ast)$, y sea $f:G\ra H$ sobreyectiva un homomorfismo de $G$ a $H$. Entonces, para todo $h_1,h_2\in H$, se tiene que:
+        \[|f^{-1}(h_1)|=|f^{-1}(h_2)|\]
+    \end{lemma}
+    \begin{proof}
+        Sea $K=f^{-1}(e_H)$ el núcleo de $f$, y sean $g\in G,~h\in H$ tales que $f(g)=h$. Entonces, se desea demostrar que $f^{-1}(h)=g\circ K$, donde si $K=\{e_1,\dots,e_n\}$, entonces $g\circ K=\{g\circ e_1,\dots,g\circ e_n\}.$
+
+        En primer lugar, obsérvese que 
+        \[h=f(g)=f(g)\ast e_H=f(g)\ast f(e_i)=f(g\circ e_i),~i=1,\dots,n\]
+        Entonces, $g\circ e_i\in f^{-1}(h)$, y como la igualdad planteada encima se cumple para todos los $e_i\in K$, entonces $g\circ e_1,\dots,g\circ e_n\in f^{-1}(h)$, y por lo tanto $g\circ K\subseteq f^{-1}(h)$.
+
+        En segundo lugar, sea $g'\in f^{-1}(h)$. Entonces:
+        \begin{align*}
+            &g'=e_G\circ g'=(g\circ g^{-1})\circ g'=g\circ(g^{-1}\circ g')&&\big{/}f(~)\\
+            f(&g')=f(g\circ(g^{-1}\circ g'))=f(g)\ast f(g^{-1}\circ g') \\
+            &h=h\ast f(g^{-1}\circ g')&&\big{/}h^{-1}\ast \\
+            &e_H=e_H\ast f(g^{-1}\circ g')=f(g^{-1}\circ g')
+        \end{align*}
+        Por lo que $g^{-1}\circ g'\in K$, y si se define $c=g^{-1}\circ g'$, se obtiene que $g'=g\circ c$ para un $c\in K$. Esto significa que $g'\in g\circ K$, lo que implica que $f^{-1}(h)\subseteq g\circ K$.
+
+        Debido a que $f^{-1}(h)\subseteq g\circ K$ y $f^{-1}(h)\supseteq g\circ K$, se comprueba que $f^{-1}(h)=g\circ K$, y por lo tanto $|f^{-1}(h)|=|g\circ K|=|K|$. Entonces, se concluye que para todo par $h_1,h_2\in H$, se cumple que
+        \[|f^{-1}(h_1)|=|K|=|f^{-1}(h_2)|\]
+    \end{proof}
+
+    \newpage
+    \item Propiedades de los grupos cíclicos. \\
+    \begin{definition}
+        Sea el grupo $(G,\circ)$, y sea $g\in G$. Si se define
+        \[\langle g\rangle=\{g,g\circ g,\dots,e\}=\{g,g^2,\dots,e\}\]
+        Entonces $(\langle g\rangle,\circ)$ es un grupo cíclico, en el que todo el grupo está generado por un único elemento, y se dice que $\langle g\rangle$ es un subgrupo cíclico de $G$.
+    \end{definition}
+
+    Obsérvese que $g^{|\langle g\rangle|}=e$, y para $i<|\langle g\rangle|$ se tiene que $g^i\neq e$, debido a que $g$ debe generar todos los elementos de $\langle g\rangle$ antes de volver a $e$ y repetir el ciclo. Por una demostración que queda fuera del alcance del informe, si $p$ es primo y $q=p^k$, donde $k$ es entero, entonces $(\Zs_q,\cdot\bmod q)$ es un grupo cíclico. Si $a\in\Zs_q$ cumple con que $\langle a\rangle=\Zs_q$, entonces se dice que $a$ es una raíz primitiva módulo $q$.
+
+    \begin{proposition}
+        Sea $G$ un conjunto finito. Luego, para $g\in G$ se cumple que $g^{|G|}=e$. De manera análoga, si $a\in\Zs_q$, entonces $a^{\phi(q)}\equiv_q 1$.
+    \end{proposition}
+    \begin{proof}
+        Solo se tiene que demostrar la primera parte de la proposición. Dado que $\langle g\rangle$ es subgrupo de $G$, por Teorema de Lagrange se tiene que $|\langle g\rangle|\bigm||G|$. Luego, si $|G|=c\cdot|\langle g\rangle|$, con $c$ entero, entonces:
+        \[g^{|G|}=g^{c|\langle g\rangle|}=(g^{|\langle g\rangle|})^c=e^c=e\]
+    \end{proof}
+
+    Esta proposición es necesaria para demostrar el siguiente teorema.
+    \begin{theorem}
+    \label{th:3}
+        Sea $q=p^k$ con $p$ primo y $k$ entero, y sea $a$ una raíz primitiva módulo $q$. Luego, para $t$ entero se tiene que $a^t\equiv_q 1$ si y solo si $\phi(q)\mid t$.
+    \end{theorem}
+    \begin{proof}
+        Se demuestran ambas direcciones de implicancia.
+        \begin{itemize}
+            \item[$\la)$] Como $\phi(q)\mid t$, entonces $t=c\cdot\phi(q)$ para $c$ entero. Luego,
+            \[a^t\equiv_q a^{c\cdot\phi(q)}\equiv_q(a^{\phi(q)})^c\equiv_q 1^c\equiv_q 1\]
+            \item[$\ra)$] Por contradicción, suponga que $\phi(q)\nmid t$. Con este supuesto, se puede definir $t=c\cdot\phi(q)+r$, donde $c,r$ son enteros y $0<r<\phi(q)$. Luego,
+            \[1\equiv_q a^t\equiv_q a^{c\cdot\phi(q)+r}\equiv_q a^{c\cdot\phi(q)}a^r\equiv_q a^r\]
+            Y entonces, se tiene que $a^r\equiv_q 1$. Pero esto es imposible, debido a que, como $a$ es raíz primitiva módulo $q$, entonces $|\langle a\rangle|=\phi(q)$. Después, $a^i$ solo puede ser congruente a 1 módulo $q$ para exponentes $i$ múltiplos de $\phi(q)$, lo que no se cumple en el caso del exponente $r$ ya que $0<r<\phi(q)$. Por lo tanto, debe ocurrir que $\phi(q)\mid t$.
+        \end{itemize}
+    \end{proof}
+\end{enumerate}
+
+
+\newpage
+\section{Demostración del teorema fundamental}
+Se requieren dos lemas principales para demostrar el teorema \ref{th:1}. A continuación, se presentan sus planteamientos y demostraciones.
+
+\begin{lemma}
+\label{le:4.1}
+    Sea $n$ entero, y sea la secuencia de enteros $m=(m_1,\dots,m_k)$, donde $m_i\mid n$ y $\mcd(m_i,m_j)=1,~1\leq i<j\leq k$. Entonces, para cada posible secuencia $s=(s_1,\dots,s_k)$, donde $s_1\in\Zs_{m_1},~\dots,~s_k\in\Zs_{m_k}$, se tiene que la cantidad de elementos en \[\Zs_n\cap \{b\in\Z\mid b\bmod m=s\}\] es la misma.
+\end{lemma}
+
+Lo planteado en este lema quiere decir que, para toda secuencia $s=(s_1,\dots,s_k)$ cuyos elementos cumplen con $s_1\in\Zs_{m_1},~\dots,~s_k\in\Zs_{m_k}$, la cantidad de $b\in\Zs_n$ tales que $b\bmod m=s$ va a ser la misma, independiente de los valores que tome la secuencia $s$.
+\begin{proof}
+    Sea $t$ el producto de todos los números primos que dividen a $n$ pero no dividen a ninguno de los $m_i,~1\leq i\leq k$. Existen dos casos con respecto al valor que puede tomar $t$:
+    \begin{itemize}
+        \item $t\neq 1$: \\
+        Por el Teorema Chino del Resto, existe un $b$ entero tal que $b\bmod(m,t)=(s,1)$. Esta condición es análoga al sistema de congruencias
+        \begin{equation}
+            b\equiv_{m_1}s_1,\quad\dots,\quad b\equiv_{m_k}s_k,\quad b\equiv_t 1
+            \label{eq:sist_congr}
+        \end{equation}
+        Luego, si se define $\beta=b\bmod n$, se observa que como $t\mid n$ y $m_i\mid n$, entonces 
+        \[\beta\bmod m_i=(b\bmod n)\bmod m_i=b\bmod m_i=s_i\bmod m_i,~1\leq i\leq k\]
+        De la misma manera, $\beta\bmod t=1$, y por lo tanto $\beta\bmod(m,t)=(s,1)$. Entonces, se puede garantizar que existirá un $b\in\Z_n$ que cumpla con (\ref{eq:sist_congr}). Ahora bien, suponiendo que $b\in\Z_n$, se tiene que $b\in\Zs_n$. Esto se debe a que, si $b\not\in\Zs_n$, entonces existe un primo $p$ tal que $p\mid n$ y $p\mid b$. Luego, este $p$ también divide, o a algún $m_i$, o bien a $t$. Como  para $q_i,~1\leq i \leq k$ entero se tiene que $s_i=b-q_im_i$, entonces $p\mid m_i$ implica que $p\mid s_i$, lo que contradice $\mcd(m_i,s_i)=1$. También, como para $q$ entero se tiene $1=b-qt$, entonces $p\mid t$ implica que $p\mid 1$, lo que es imposible. Por lo tanto, debe ser que $b\in\Zs_n$.
+
+        \item $t=1$: \\
+        Por Teorema Chino del Resto, existe un $b$ entero tal que $b\bmod m=s$, y como $m_i\mid n$ entonces se puede elegir un $b\in\Z_n$ que cumpla esta condición. Suponiendo que $b\in\Z_n$, se tiene que $b\in\Zs_n$, debido a que si existe un $p$ primo que divide a $n$ y $b$, entonces este $p$ debe dividir a algún $m_i$, y como se observó en el punto anterior, esto no es posible ya que implicaría que $\mcd(m_i,s_i)\neq 1$.
+    \end{itemize}
+
+    Se concluye del procedimiento anterior que para toda secuencia $s$ siempre existirá un $b\in\Zs_n$ tal que $b\bmod m=s$. Esto incluye el caso en el que $t\neq 1$, ya que si $b\in\Zs_n$ cumple con $b\bmod(m,t)=(s,1)$, entonces el mismo $b$ cumplirá con $b\bmod m=s$. Por lo tanto, denotando $G=\Zs_{m_1}\times\dotsm\times\Zs_{m_k}$, se define la función $f:\Zs_n\ra G$ dada por
+    \[f(x)=x\bmod m\]
+    Por lo anteriormente demostrado, esta función es sobreyectiva. Sin embargo, dado que $\prod^k_{i=1}m_i\leq n$, no se puede garantizar que se cumpla que $|\Zs_n|=n=\prod^k_{i=1}m_i=|G|$, por lo que, por el Principio del Palomar, no se puede asegurar que $f$ sea inyectiva.
+
+    Ahora bien, $f$ define un homomorfismo del grupo $(\Zs_n,\cdot\bmod n)$ al grupo $(G,\cdot)$, donde la operación del grupo $G$ es la multiplicación módulo $m_i$ sobre el componente $i$ de la secuencia. Para demostrar esto, solo queda por comprobar que $f$ cumple con la condición de homomorfismo. Sean $f(a_1)=(b_1,\dots,b_k),~f(a_2)=(c_1,\dots,c_k)$. Entonces:
+    \begin{align*}
+        f(a_1a_2\bmod n)&=((a_1a_2\bmod n)\bmod m_1,\dots,(a_1a_2\bmod n)\bmod m_k) \\
+        &=(a_1a_2\bmod m_1,\dots,a_1a_2\bmod m_k) \\
+        &=((a_1\bmod m_1\cdot a_2\bmod m_1)\bmod m_1,\dots,(a_1\bmod m_k\cdot a_2\bmod m_k)\bmod m_k) \\
+        &=(b_1c_1\bmod m_1,\dots,b_kc_k\bmod m_k)=(b_1,\dots,b_k)\cdot(c_1,\dots,c_k) \\
+        &=f(a_1)\cdot f(a_2)
+    \end{align*}
+    Finalmente, como $f$ es un homomorfismo sobreyectivo de $\Zs_n$ a $G$, entonces por el lema \ref{le:3.2} se tiene que para todas las secuencias $(s_1,\dots,s_k)\in G$ el conjunto $f^{-1}(s_1,\dots,s_k)$ va a tener la misma cantidad de elementos, y por lo tanto habrá la misma cantidad de números $b\in\Zs_n$ tales que $b\bmod m=(s_1,\dots,s_k)$.
+\end{proof}
+
+\begin{lemma}
+\label{le:4.2}
+    Sean los primos $p_1\neq p_2$, y sean $q_1=p_1^{k_1},~q_2=p_2^{k_2}$, con $k_1,k_2$ enteros. Sea $n$ entero y suponga que $q_1q_2\mid n$. Denotando $t_i=\mcd(\phi(q_i),n-1),~m_i=\frac{\phi(q_i)}{t_i},~i=1,2$, se tiene que:
+    \begin{enumerate}[label=\alph*\textup{)}]
+        \item A los más $\frac{\phi(n)}{m_1m_2}$ de los elementos $b\in\Zs_n$ no satisfacen $W_n(b)$.
+        \item Si $t_1$ es par (de manera arbitraria), entonces a lo más $\frac{\phi(n)}{2m_1m_2}$ de los $b\in\Zs_n$ no satisfacen $W_n(b)$.
+    \end{enumerate}
+\end{lemma}
+\begin{proof}
+    Se demuestra primero la afirmación $a)$. Sea $a_i,~i=1,2$ una raíz primitiva módulo $q_i$, y sea $b\in\Zs_n$. Como $q_i\mid n$, entonces $\mcd(b,q_i)=1$, lo que implica que $b\in\Zs_{q_i}$, por lo que $b\equiv_{q_i}a_i^{r_i}$ para algún par de enteros $r_1,r_2$. Ahora, si $b$ cumple con
+    \begin{equation}
+        b^{n-1}\equiv_n 1
+        \label{eq:fermat}
+    \end{equation}
+    Entonces, como $q_1q_2\mid n$, se tiene que
+    \begin{align*}
+        b^{n-1}\bmod n&=1&&\big{/}(~)\bmod q_i \\
+        (b^{n-1}\bmod n)\bmod q_i=b^{n-1}\bmod q_i&=1\bmod q_i=1
+    \end{align*}
+    Esto, a su vez, implica que $1\equiv_{q_i}b^{n-1}\equiv_{q_i}(a_i^{r_i})^{n-1}\equiv_{q_i}a_i^{r_i(n-1)},~i=1,2$, y como $a_i$ es una raíz primitiva, por el teorema \ref{th:3} se cumple que $\phi(q_i)\mid r_i(n-1)$. Ahora, como $\phi(q_i)=m_it_i$, y $t_i$ contiene todos los factores compartidos entre $\phi(q_i)$ y $n-1$, entonces $m_i\mid r_i$, y por lo tanto existen $h_1,h_2$ enteros tales que $r_1=m_1h_2,~r_2=m_2h_2$. Nótese que el hecho de que los $r_i$ sean múltiplos de $m_i$ está asegurado cuando la ecuación (\ref{eq:fermat}) se cumple.
+
+    Se obtuvo anteriormente que los únicos $b\in\Zs_n$ que pueden cumplir con (\ref{eq:fermat}) son aquellos cuyos exponentes $r_i$ asociados (mediante la fórmula $b\equiv_{q_i}a_i^{r_i}$) sean múltiplos de $m_i$. Como $1\leq r_i\leq\phi(q_i)$ y $m_i\mid\phi(q_i)$, entonces $\frac{1}{m_i}$ de los exponentes $r_i$ son múltiplos de sus $m_i$ respectivos, y por ende $\frac{1}{m_1m_2}$ de los pares $s_1\in\Zs_{q_1},~s_2\in\Zs_{q_2}$ dados por $s_1\equiv_{q_1}a_1^{r_1},~s_2\equiv_{q_2}a_2^{r_2}$ tienen exponentes $r_1,r_2$ múltiplos de $m_1,m_2$ respectivamente. Luego, en el mejor de los casos, cada par $s_1,s_2$ con exponentes múltiplos de $m_1,m_2$ estará asociado a un conjunto separado de elementos $b_j\in\Zs_n,j=1,\dots,N$ que satisfagan (\ref{eq:fermat}), por lo que a lo más $\frac{1}{m_1m_2}$ de los pares estarán asociados a un conjunto $\{b_1,\dots,b_N\}$ en el que se sostenga la condición (\ref{eq:fermat}).
+
+    Finalmente, por el lema \ref{le:4.1}, la cantidad de $b\in\Zs_n$ tales que $b\bmod(q_1,q_2)=(s_1,s_2)$ es igual para todos los posibles pares $s_1\in\Zs_{q_1},~s_2\in\Zs_{q_2}$, por lo que a lo más $\frac{1}{m_1m_2}$ de los $\phi(n)$ elementos $b\in\Zs_n$ van a satisfacer (\ref{eq:fermat}). Como si ocurre que $b^{n-1}\not\equiv_n 1$ entonces $W_n(b)$ es verdadero (al obedecer la condición $(ii)(a)$), se tiene que a lo más $\frac{\phi(n)}{m_1m_2}$ de los $b\in\Zs_n$ tienen la posibilidad de cumplir con (\ref{eq:fermat}) y por ende no necesariamente satisfacer $W_n(b)$, por lo que $\frac{\phi(n)}{m_1m_2}$ es la cota máxima de números $b\in\Zs_n$ para los cuales $W_n(b)$ es falso.
+
+    La demostración de la afirmación $b)$ se basa en la propuesta de que incluso si $b\in\Zs_n$ cumple con que $b^{n-1}\equiv_n 1$, para al menos la mitad de estos números se va a cumplir la condición $(ii)(a)$ de $W_n(b)$, haciéndolos testigos de la composición de $n$. Esta demostración se separa en dos casos:
+    \begin{itemize}
+        \item $e(t_1)=e(t_2)$: \\
+        Sea $j$ entero tal que $d(j)=\frac{n-1}{2^j}$ es un entero, y $t_i\nmid d(j),~\frac{t_i}{2}\mid d(j),~i=1,2$. La existencia de tal entero $j$ se fundamenta a continuación.
+        
+        Denótese $t_1=\alpha_1\cdot 2^x,~t_2=\alpha_2\cdot 2^x$, donde $x=e(t_1)=e(t_2)$, lo que implica que $\alpha_1,\alpha_2$ son enteros impares. También, denótese $n-1=\beta\cdot 2^y$ donde $\beta$ es impar e $y$ es un entero no negativo ya que $2\mid t_i$, y $t_i\mid(n-1)$. Luego, $d(j)=\frac{n-1}{2^j}=\beta\cdot 2^{y-j}$. Ahora, considerando que los exponentes $x,y$ son maximales, y también
+        \[t_i\mid(n-1)\llra\alpha_i\cdot 2^x\mid\beta\cdot 2^y,~i=1,2\] 
+        Se tiene entonces que $\alpha_i\mid\beta$. Con todo esto, se busca un $j$ que cumpla con
+        \begin{align*}
+            t_i\nmid d(j)&\llra\alpha_i\cdot 2^x\nmid\beta\cdot 2^y\llra 2^x\nmid 2^y \\
+            \frac{t_i}{2}\mid d(j)&\llra\alpha_i\cdot 2^{x-1}\mid\beta\cdot 2^y\llra 2^{x-1}\mid 2^y
+        \end{align*}
+        Proponiendo que $x-1=y-j$, se obtiene que $j=y-x+1$, y por lo tanto $d(j)=\beta\cdot 2^{x-1}$. Con esta propuesta, $d(j)$ es entero debido a que $x=e(t_i)\geq 1$., y también se cumple que $d(j)$ no es divisible por $t_i=a_i\cdot 2^x$, pero sí es divisible por $\frac{t_i}{2}=a_i\cdot 2^{x-1}$, por lo que sí existe el valor de $j$ deseado.
+
+        Habiendo definido $j$, tómese un $b\in\Zs_n$ que satisfaga que sus exponentes $r_1,r_2$ asociados sean múltiplos de $m_1,m_2$ respectivamente, es decir, que $r_i=h_im_i,~i=1,2$. Entonces, si $h_1$ es impar mientras que $h_2$ es par, se tiene que $\phi(q_1)\nmid h_1m_1d(j),~\phi(q_2)\mid h_2m_2d(j)$. Esto se debe a que, como $\phi(q_i)=m_it_i,~i=1,2$, para que $\phi(q_i)$ divida a $h_im_id(j)$ tiene que ocurrir que $t_i\mid h_id(j)$. Observando que $t_i\nmid d(j)$, pero $\frac{t_i}{2}\mid d(j)$, entonces $h_i$ tiene que incorporar 2 como factor para que se cumpla que $t_i\mid h_id(j)$, por lo que $h_i$ debe ser par para que $\phi(q_i)\mid h_im_id(j)$. 
+
+        Luego, con la paridad planteada para $h_1,h_2$, si $b^{d(j)}\equiv_{q_1}1$, entonces
+        \[1\equiv_{q_1}b^{d(j)}\equiv_{q_1}(a_1^{r_1})^{d(j)}\equiv_{q_1}a_1^{h_1m_1d(j)}\]
+        Como $a_1$ es una raíz primitiva, por el teorema \ref{th:3} se debería tener que $\phi(q_1)\mid h_1m_1d(j)$, pero esto contradice lo obtenido anteriormente, por lo que 
+        \begin{equation}
+            b^{d(j)}\not\equiv_{q_1}1
+            \label{eq:no_n}
+        \end{equation}
+        Al mismo tiempo, utilizando el teorema \ref{th:3} se tiene que:
+        \[b^{d(j)}\equiv_{q_2}(a_2^{r_2})^{d(j)}\equiv_{q_2}a_2^{h_2m_2d(j)}\equiv_{q_2}1\]
+        \begin{equation}
+            b^{d(j)}\equiv_{q_2}1
+            \label{eq:no_1}
+        \end{equation}
+        Debido a que $\phi(q_2)\mid h_2m_2d(j)$ y $a_2$ es una raíz primitiva. 
+        
+        Para un $b\in\Zs_n$ con $h_1$ impar y $h_2$ par asociados, se tiene que por (\ref{eq:no_n}), $q_1\nmid (b^{d(j)}-1)$, y como $q_1\mid n$, entonces no todos los factores de $n$ dividen a $b^{d(j)}-1$, por lo que $n\nmid(b^{d(j)}-1)$, lo que implica que $\mcd(b^{d(j)}-1,n)<n$. También, por (\ref{eq:no_1}), $q_2\mid (b^{d(j)}-1)$, y como $q_2\mid n$, entonces $\mcd(b^{d(j)}-1,n)\geq q_2>1$. Por lo tanto, este $b$ cumple con la condición $(ii)(b)$ de $W_n(b)$, y $b$ es entonces testigo de la composición de $n$. De manera similiar, si $h_1$ es par y $h_2$ es impar, entonces $b^{d(j)}\equiv_{q_1}1,~b^{d(j)}\not\equiv_{q_2}1$, y luego $W_n(b)$ es verdadero.
+
+        Tomando un par $s_1\in\Zs_{q_1},~s_2\in\Zs_{q_2}$ donde $s_i\equiv_{q_i}a_i^{r_i}\equiv_{q_i}a_i^{h_im_i},~i=1,2$, se tiene que como $1\leq r_i\leq\phi(q_i)$, entonces $h_i$ puede tomar los valores
+        \[h_i=1,\dots,\frac{\phi(q_i)}{m_i}=t_i\]
+        Y como $t_i$ es par, el $h_i$ asociado a $s_i$ puede ser par o impar con la misma frecuencia. Esto implica que las cuatro opciones para la paridad que puede tomar los números $h_1,h_2$ asociados a $s_1,s_2$ (par-par, par-impar, impar-par, impar-impar) ocurre cada una con la misma frecuencia. Como se observó anteriormente, por el lema \ref{le:4.1} se tiene que la cantidad de $b\in\Zs_n$ tales que $b\bmod(q_1,q_2)=(s_1,s_2)$ es la misma para todos los posibles pares $s_1\in\Zs_{q_1},~s_2\in\Zs_{q_2}$, y esto a su vez conlleva que, para los $s_i$ vinculados a exponentes $r_i=h_im_i$, la cantidad de $b\in\Zs_n$ asociados a cada par $r_1,r_2$ es la misma. Como para la mitad de estos pares $r_1,r_2$ se tiene que un $h_i$ es par mientras que el otro es impar, entonces para la mitad de los $b\in\Zs_n$ asociados a estos exponentes se puede asegurar que satisfacen $W_n(b)$.
+
+        Se estableció anteriormente que la cantidad de $b\in\Zs_n$ asociados a $r_i$ múltiplos de $m_i$ es $\frac{\phi(n)}{m_1m_2}$, y como la mitad de estos satisfacen la condición $(ii)(b)$, se concluye que de $\frac{\phi(n)}{2m_1m_2}$ de los $b\in\Zs_n$ no se puede afirmar que $W_n(b)$ sea verdadero, y por lo tanto a lo más $\frac{\phi(n)}{2m_1m_2}$ de los $b\in\Zs_n$ no satisfacen $W_n(b)$.
+
+        \item $e(t_1)>e(t_2)$: \\
+        Sean $j,l$ enteros tales que $d(j)$ es entero, $t_2\mid d(j),~t_1\nmid d(j)$, y $l$ es minimal de manera que $\frac{t_1}{2^l}\mid d(j)$. Se comprueba la existencia de $j,l$ a continuación, de manera similar al último caso.
+        
+        Denótese $t_1=\alpha\cdot 2^x,~t_2=\beta\cdot 2^y,~n-1=\gamma\cdot 2^z$, donde se tiene que $x=e(t_1),~y=e(t_2),~x>y$, $\gamma$ es impar y $z$ es un entero no negativo. Luego, $d(j)=\gamma\cdot 2^{z-j}$, y como $t_i\mid(n-1),~i=1,2$, entonces $\alpha\mid\gamma,~\beta\mid\gamma$. Se debe cumplir que
+        \begin{align*}
+            t_2\mid d(j)&\llra\beta\cdot 2^y\mid\gamma\cdot 2^{z-j}\llra 2^y\mid 2^{z-j} \\
+            t_1\nmid d(j)&\llra\alpha\cdot 2^x\nmid\gamma\cdot 2^{z-j}\llra 2^x\nmid 2^{z-j} \\
+            \frac{t_1}{2^l}\mid d(j)&\llra\alpha\cdot 2^{x-l}\mid\gamma\cdot 2^{z-j}\llra 2^{x-l}\mid 2^{z-j}
+        \end{align*}
+        Se propone que $y=z-j\ra j=z-y$, y también se propone que $x-l=z-j=y\ra l=x-y$. De esta manera, $d(j)=\gamma\cdot 2^y$, y este valor es entero ya que $y=e(t_2)\geq 0$. Bajo esta propuesta, se cumple que $d(j)$ es divisible por $t_2=\beta\cdot 2^y$, no es divisible por $t_1=\alpha\cdot 2^x$, pero sí es divisible por $\frac{t_1}{2^l}=\alpha\cdot 2^y$, por lo que los valores de $j,l$ son existentes.
+
+        Ahora bien, dados $j,l$ que cumplan con las propiedades planteadas anteriormente, sea un $b\in\Zs_n$ cuyos exponentes asociados $r_i,~i=1,2$ sean múltiplos de $m_i,~i=1,2$ respectivamente. Como $t_2\mid d(j)$, entonces $\phi(q_2)\mid h_2m_2d(j)$, por lo que (\ref{eq:no_1}) se cumple. Mientras tanto, solo se tendrá que $b^{d(j)}\equiv_{q_1}1$ si $\phi(q_1)\mid h_1m_1d(j)$. Como $\phi(q_1)=m_1t_1$, esto solo ocurrirá si $t_1\mid h_1d(j)$, y dado que $t_1\nmid d(j)$ pero $\frac{t_1}{2^l}\mid d(j)$, $h_1$ tiene que incorporar $2^l$ como factor para que $\phi(q_1)\mid h_1m_1d(j)$. Por lo tanto, solo si $2^l\mid h_1$ se tendrá $b^{d(j)}\equiv_{q_1}1$, pero si $2^l\nmid h_1$, entonces se cumple (\ref{eq:no_n}) y $b$ satisface la condición $(ii)(b)$ de $W_n(b)$. Por ende, cuando $2^l\mid h_1$ no se puede asegurar que $W_n(b)$ se cumple.
+
+        Como se observó en el último caso, la cantidad de $b\in\Zs_n$ asociados a cada par de exponentes $r_1,r_2$ múltiplos de $m_i$ es idéntica. Adicionalmente, se obtuvo que $h_1$ puede tomar valores desde 1 hasta $t_1$, y como $2^l\mid t_1$, entonces $\frac{1}{2^l}$ de los posibles valores de $h_1$ son múltiplos de $2^l$. Por ende, $\frac{1}{2^l}$ de los pares $r_i$ múltiplos de $m_i$ tienen un $h_1$ múltiplo de $2^l$, y por lo tanto para $\frac{1}{2^l}$ de los $b\in\Zs_n$ asociados a este par de exponentes no se puede afirmar que $W_n(b)$ sea verdadero.
+
+        Tal como se planteó anteriormente, hay $\frac{\phi(n)}{m_1m_2}$ elementos $b\in\Zs_n$ asociados a pares de exponentes $r_i=h_im_i,~i=1,2$, y entonces para $\frac{\phi(n)}{2^lm_1m_2}$ de estos elementos no se puede asegurar $W_n(b)$. Pero $e(t_1)>e(t_2)$, por lo que $l\geq 1$, y en el peor de los casos ocurrirá que $l=1$. De esta manera, se puede establecer que a lo más $\frac{\phi(n)}{2m_1m_2}$ de los $b\in\Zs_n$ no satisfacen $W_n(b)$.
+    \end{itemize}
+\end{proof}
+
+
+
+
+
+% Fin del documento
+\end{document}
