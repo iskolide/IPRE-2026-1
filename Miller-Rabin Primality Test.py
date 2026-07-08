@@ -1,5 +1,4 @@
 import random as rnd
-import math
 
 primes_init = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 
                  53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 
@@ -41,52 +40,6 @@ def exp_mod(a, b, n):
         j >>= 1
     return r
 
-def exp1(a, b, n):
-    a = a % n
-    r = 1
-    while b > 0:
-        if b % 2 == 1:
-            r = r * a % n
-        a = a * a % n
-        b >>= 1
-    return r
-
-def expk(a, b, n, k = 5):
-    a = a % n
-    pre = [1, a]
-    g = a
-    for i in range(2**k - 2):
-        g *= a
-        pre.append(g)
-    r = 1
-    j = (2**k - 1) << (b.bit_length() // k * k)
-    l = b.bit_length() // k 
-    while j > 0:
-        for _ in range(k):
-            r = r * r % n
-        r = r * pre[(b & j) >> (l * k)] % n
-        l -= 1
-        j >>= k
-    return r
-
-def expk2(a, b, n, k = 5):
-        a = a % n
-        m = 2 ** k - 1
-        pre = [1, a]
-        g = a
-        for i in range(2**k - 2):
-            g *= a
-            pre.append(g)
-        r = 1
-        j = b.bit_length() // k * k
-        while j >= 0:
-            for _ in range(k):
-                r = r * r % n
-            i = (b >> j) & m
-            if i:
-                r = r * pre[i] % n
-            j -= k
-        return r
 
 #Miller-Rabin primality test
 def Prime(n, k):
@@ -103,9 +56,6 @@ def Prime(n, k):
         while (n - 1) % 2**(i + 1) == 0:
             i += 1
         b_i = exp_mod(b, (n - 1) // 2**i, n)
-        #b_i = exp1(b, (n - 1) // 2**i, n)
-        #b_i = expk(b, (n - 1) // 2**i, n)
-        #b_i = expk2(b, (n - 1) // 2**i, n)
         for l in range(i - 1):
             if 1 < gcd(b_i - 1, n) < n:
                 return False
@@ -113,6 +63,3 @@ def Prime(n, k):
         if (b_i**2) % n != 1:
             return False
     return True
-
-
-Prime(991983977971967953947941937929919911907887883881877863859857853839829827823821811809797787773769761757751743739733727719709701691683677673661659653647643641631619617613607601599593587577571569563557547541523521509503499491487479467463461457449443439433431421419409401397389383379373367359353349347337,100)

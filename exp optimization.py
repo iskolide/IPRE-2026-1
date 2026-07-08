@@ -15,68 +15,6 @@ primos_init = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
                  863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 
                  947, 953, 967, 971, 977, 983, 991, 997]
 
-#right to left binary exponentiation
-def exp1(a, b, n):
-    a = a % n
-    r = 1
-    while b > 0:
-        if b % 2 == 1:
-            r = r * a % n
-        a = a * a % n
-        b >>= 1
-    return r
-
-#left to right binary exponentiation
-def exp2(a, b, n):
-    a = a % n
-    r = 1
-    j = 1 << (b.bit_length() - 1)
-    while j > 0:
-        r = r * r % n
-        if b & j:
-            r = r * a % n
-        j >>= 1
-    return r
-
-#left to right k-ary exponentiation
-def expk(a, b, n, k = 5):
-    a = a % n
-    pre = [1, a]
-    g = a
-    for i in range(2**k - 2):
-        g *= a
-        pre.append(g)
-    r = 1
-    j = (2**k - 1) << (b.bit_length() // k * k)
-    l = b.bit_length() // k 
-    while j > 0:
-        for _ in range(k):
-            r = r * r % n
-        r = r * pre[(b & j) >> (l * k)] % n
-        l -= 1
-        j >>= k
-    return r
-
-#left to right k-ary exponentiation with bit-selection optimization
-def expk2(a, b, n, k = 5):
-        a = a % n
-        m = 2 ** k - 1
-        pre = [1, a]
-        g = a
-        for i in range(2**k - 2):
-            g *= a
-            pre.append(g)
-        r = 1
-        j = b.bit_length() // k * k
-        while j >= 0:
-            for _ in range(k):
-                r = r * r % n
-            i = (b >> j) & m
-            if i:
-                r = r * pre[i] % n
-            j -= k
-        return r
-
 #elementary mod exp implementation
 def exp_base(a, b, n):
     r = a
@@ -97,3 +35,65 @@ def exp(a, b, n):
         else:
             i += 1
     return a if i < l else exp_base(a, b, n)
+
+#right to left binary exponentiation
+def exp_rl(a, b, n):
+    a = a % n
+    r = 1
+    while b > 0:
+        if b % 2 == 1:
+            r = r * a % n
+        a = a * a % n
+        b >>= 1
+    return r
+
+#left to right binary exponentiation
+def exp_lr(a, b, n):
+    a = a % n
+    r = 1
+    j = 1 << (b.bit_length() - 1)
+    while j > 0:
+        r = r * r % n
+        if b & j:
+            r = r * a % n
+        j >>= 1
+    return r
+
+#left to right k-ary exponentiation
+def exp_lr_k(a, b, n, k = 5):
+    a = a % n
+    pre = [1, a]
+    g = a
+    for i in range(2**k - 2):
+        g *= a
+        pre.append(g)
+    r = 1
+    j = (2**k - 1) << (b.bit_length() // k * k)
+    l = b.bit_length() // k 
+    while j > 0:
+        for _ in range(k):
+            r = r * r % n
+        r = r * pre[(b & j) >> (l * k)] % n
+        l -= 1
+        j >>= k
+    return r
+
+#left to right k-ary exponentiation with bit-selection optimization
+def exp_lr_k_2(a, b, n, k = 5):
+        a = a % n
+        m = 2 ** k - 1
+        pre = [1, a]
+        g = a
+        for i in range(2**k - 2):
+            g *= a
+            pre.append(g)
+        r = 1
+        j = b.bit_length() // k * k
+        while j >= 0:
+            for _ in range(k):
+                r = r * r % n
+            i = (b >> j) & m
+            if i:
+                r = r * pre[i] % n
+            j -= k
+        return r
